@@ -1,7 +1,7 @@
 package me.ruende.entityai.utils;
 
 import me.ruende.entityai.EntityAI;
-import me.ruende.entityai.items.staff.Staff;
+import me.ruende.entityai.items.staff.SummonerStaff;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Player;
@@ -38,7 +38,7 @@ public class AnimationHelper {
                 float offset = (float) Math.sin(tickCounter * 0.1) * 0.008f;
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     ItemStack item = player.getInventory().getItemInMainHand();
-                    if (new Staff().isStaff(item)) {
+                    if (new SummonerStaff().isStaff(item)) {
                         animateHighlight(offset);
                     }
                 }
