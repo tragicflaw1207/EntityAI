@@ -1,0 +1,4 @@
+name: EntityAI
+version: '${version}'
+main: me.ruende.entityai.EntityAI
+api-version: '1.20'

@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+}
+
+group = 'me.ruende'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "papermc-repo"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+    maven {
+        name = "ProtocolLib"
+        url = "https://repo.dmulloy2.net/repository/public/"
+    }
+    maven {
+        name = "ItemsAdder"
+        url = "https://jitpack.io"
+    }
+    maven {
+        name = "mythicmobs-repo"
+        url = "https://mvn.lumine.io/repository/maven-public/"
+    }
+    maven {
+        name = 'spigot-repo'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    mavenLocal()
+}
+
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT"
+    compileOnly 'com.comphenix.protocol:ProtocolLib:5.1.0'
+    compileOnly 'com.github.LoneDev6:API-ItemsAdder:3.6.1'
+    compileOnly 'io.lumine:Mythic-Dist:5.6.2'
+    implementation 'org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT'
+    implementation 'org.spigotmc:spigot:1.20.1-R0.1-SNAPSHOT'
+}
+
+def targetJavaVersion = 17
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set(targetJavaVersion)
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+jar {
+    archiveFileName = project.name + ".jar"
+    destinationDirectory.set(file("C:\\Users\\User\\Desktop\\Ruende\\Team_Project\\Server\\test\\plugins"))
+}
