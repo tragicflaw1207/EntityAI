@@ -1,7 +1,7 @@
 package me.ruende.entityai.utils;
 
 import me.ruende.entityai.EntityAI;
-import me.ruende.entityai.items.staff.Staff;
+import me.ruende.entityai.items.staff.SummonerStaff;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -19,6 +19,7 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class HighlightHelper {
     private final List<BlockDisplay> displayBlocks = new ArrayList<>();
@@ -32,13 +33,13 @@ public class HighlightHelper {
     }
 
     public void updateTargetHighlight(Player player) {
-        LivingEntity targetEntity = targetingHelper.getTargetEntity(player);
-        Block targetBlock = targetingHelper.getTargetBlock(player);
+        Optional<LivingEntity> targetEntity = targetingHelper.getTargetEntity(player);
+        Optional<Block> targetBlock = targetingHelper.getTargetBlock(player);
 
-        if (targetEntity != null) {
-            updateHighlight(targetEntity, null);
-        } else if (targetBlock != null) {
-            Location targetLocation = targetBlock.getLocation().add(0, 1, 0);
+        if (targetEntity.isPresent()) {
+            updateHighlight(targetEntity.get(), null);
+        } else if (targetBlock.isPresent()) {
+            Location targetLocation = targetBlock.get().getLocation().add(0, 1, 0);
             updateHighlight(null, targetLocation);
         } else {
             clearHighlight();
@@ -116,7 +117,7 @@ public class HighlightHelper {
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     ItemStack item = player.getInventory().getItemInMainHand();
-                    if (new Staff().isStaff(item)) {
+                    if (new SummonerStaff().isStaff(item)) {
                         updateTargetHighlight(player);
                     } else {
                         clearHighlight();

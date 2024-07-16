@@ -3,57 +3,58 @@ package me.ruende.entityai.entity.control;
 import me.ruende.entityai.EntityAI;
 import me.ruende.entityai.entity.summon.EntitySummoner;
 import me.ruende.entityai.messages.Messages;
-import me.ruende.entityai.utils.TargetingHelper;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 
-public class SurroundControl {
-    private final TargetingHelper targetingHelper;
+public class SurroundControl extends Control {
+
     private final EntitySummoner entitySummoner;
     private LivingEntity currentTarget;
 
-    public SurroundControl(TargetingHelper targetingHelper, EntitySummoner entitySummoner) {
-        this.targetingHelper = targetingHelper;
+    public SurroundControl(EntitySummoner entitySummoner) {
         this.entitySummoner = entitySummoner;
     }
 
-    public void surround(Player player) {
-        LivingEntity targetEntity = targetingHelper.getTargetEntity(player);
-        if (targetEntity == null || targetEntity instanceof Player || isSummonedEntity(targetEntity)) {
-            player.sendMessage(Messages.INVALID_TARGET_ENTITY);
-            return;
-        }
+    @Override
+    public void execute(@NotNull Player player) {
+        targetingHelper.getTargetEntity(player)
+                .filter(entity -> !(entity instanceof Player))
+                .filter(entity -> !isSummonedEntity(entity))
+                .ifPresentOrElse(target -> {
+                    ControlState.getInstance().setSurround(true);
 
-        ControlState.getInstance().setSurround(true);
+                    currentTarget = target;
 
-        currentTarget = targetEntity;
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            if (currentTarget == null || currentTarget.isDead() || !currentTarget.isValid() || !ControlState.getInstance().isSurround()) {
+                                this.cancel();
+                                return;
+                            }
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (currentTarget == null || currentTarget.isDead() || !currentTarget.isValid() || !ControlState.getInstance().isSurround()) {
-                    this.cancel();
-                    return;
-                }
+                            var summonedEntities = entitySummoner.getSummonedEntities().stream()
+                                    .filter(entity -> entity.isValid() && !entity.isDead())
+                                    .toList();
+                            int numEntities = summonedEntities.size();
 
-                var summonedEntities = entitySummoner.getSummonedEntities().stream()
-                        .filter(entity -> entity.isValid() && !entity.isDead())
-                        .toList();
-                int numEntities = summonedEntities.size();
-
-                for (int i = 0; i < numEntities; i++) {
-                    LivingEntity summonedEntity = summonedEntities.get(i);
-                    if (summonedEntity instanceof Mob mob) {
-                        Location surroundLocation = calculateSurroundingLocation(currentTarget.getLocation(), i, numEntities);
-                        moveToTargetAndFace(mob, surroundLocation, currentTarget);
-                    }
-                }
-                entitySummoner.getSummonedEntities().removeIf(entity -> !entity.isValid() || entity.isDead());
-            }
-        }.runTaskTimer(EntityAI.getInstance(), 0L, 1L);
+                            for (int i = 0; i < numEntities; i++) {
+                                LivingEntity summonedEntity = summonedEntities.get(i);
+                                if (summonedEntity instanceof Mob mob) {
+                                    Location surroundLocation = calculateSurroundingLocation(currentTarget.getLocation(), i, numEntities);
+                                    moveToTargetAndFace(mob, surroundLocation, currentTarget);
+                                }
+                            }
+                            entitySummoner.getSummonedEntities().removeIf(entity -> !entity.isValid() || entity.isDead());
+                        }
+                    }.runTaskTimer(EntityAI.getInstance(), 0L, 1L);
+                }, () -> {
+                    player.sendMessage(Messages.INVALID_TARGET_ENTITY);
+                });
     }
 
     private boolean isSummonedEntity(LivingEntity entity) {
